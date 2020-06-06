@@ -2,7 +2,14 @@ import { Feather as Icon } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import Constants from 'expo-constants';
 import React, { useCallback } from 'react';
-import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  Image,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import MapView, { Marker } from 'react-native-maps';
 import { SvgUri } from 'react-native-svg';
@@ -19,7 +26,7 @@ const Points: React.FC = () => {
   }, []);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <TouchableOpacity onPress={handleNavigateBack}>
         <Icon name="log-out" size={20} color="#34cb79" />
       </TouchableOpacity>
@@ -131,7 +138,7 @@ const Points: React.FC = () => {
           </TouchableOpacity>
         </ScrollView>
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 
