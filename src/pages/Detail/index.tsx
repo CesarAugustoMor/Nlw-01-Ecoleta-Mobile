@@ -1,51 +1,112 @@
 import { Feather as Icon, FontAwesome } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import Constants from 'expo-constants';
-import React, { useCallback } from 'react';
-import { Image, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import * as MailComposer from 'expo-mail-composer';
+import React, { useCallback, useEffect, useState } from 'react';
+import {
+  Image,
+  Linking,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { RectButton, TouchableOpacity } from 'react-native-gesture-handler';
+import api from '../../services/api';
+
+interface Params {
+  point_id: number;
+}
+
+interface Point {
+  image: string;
+  name: string;
+  email: string;
+  whatsapp: string;
+  city: string;
+  uf: string;
+  items: {
+    title: string;
+  }[];
+}
 
 const Detail: React.FC = () => {
+  const [point, setPoint] = useState<Point>({} as Point);
+
   const navigate = useNavigation();
+  const route = useRoute();
+
+  const routeParams = route.params as Params;
+
+  useEffect(() => {
+    api.get(`points/${routeParams.point_id}`).then((response) => {
+      setPoint(response.data);
+    });
+  }, []);
 
   const handleNavigateBack = useCallback(() => {
     navigate.goBack();
   }, []);
-  return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <View style={styles.container}>
-        <TouchableOpacity onPress={handleNavigateBack}>
-          <Icon name="arrow-left" size={20} color="#34cb79" />
-        </TouchableOpacity>
 
-        <Image
-          style={styles.pointImage}
-          source={{
-            uri: `https://images.unsplash.com/photo-1578916171728-46686eac8d58?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=400&q=60`,
-          }}
-        />
-        <Text style={styles.pointName}>Mercadão do João</Text>
-        <Text style={styles.pointItems}>Lampadas, Óleo de Cozinha</Text>
+  const handleComposeMail = useCallback(() => {
+    MailComposer.composeAsync({
+      subject: 'Interesse na coleta de resíduos',
+      recipients: [point.email],
+    });
+  }, []);
 
-        <View style={styles.address}>
-          <Text style={styles.addressTitle}>Endereço</Text>
-          <Text style={styles.addressContent}>Rio do Sul, SC</Text>
+  const handleWhatsApp = useCallback(() => {
+    Linking.openURL(
+      `whatsapp://send?phone=${point.whatsapp}&text=Tenho interesse sobre coleta de resíduos`
+    );
+  }, []);
+
+  if (!point.name) {
+    return (
+      <View style={{ padding: 32, paddingTop: 20 + Constants.statusBarHeight }}>
+        <Text>Carregando!</Text>
+      </View>
+    );
+  } else
+    return (
+      <SafeAreaView style={{ flex: 1 }}>
+        <View style={styles.container}>
+          <TouchableOpacity onPress={handleNavigateBack}>
+            <Icon name="arrow-left" size={20} color="#34cb79" />
+          </TouchableOpacity>
+
+          <Image
+            style={styles.pointImage}
+            source={{
+              uri: point.image,
+            }}
+          />
+          <Text style={styles.pointName}>{point.name}</Text>
+          <Text style={styles.pointItems}>
+            {point.items.map((item) => item.title).join(', ')}
+          </Text>
+
+          <View style={styles.address}>
+            <Text style={styles.addressTitle}>Endereço</Text>
+            <Text
+              style={styles.addressContent}
+            >{`${point.city} - ${point.uf}`}</Text>
+          </View>
         </View>
-      </View>
-      <View style={styles.footer}>
-        <RectButton style={styles.button} onPress={() => {}}>
-          <FontAwesome name="whatsapp" size={20} color="#FFFFFF">
-            <Text style={styles.buttonText}>WhatsApp</Text>
-          </FontAwesome>
-        </RectButton>
-        <RectButton style={styles.button} onPress={() => {}}>
-          <Icon name="mail" size={20} color="#FFFFFF">
-            <Text style={styles.buttonText}>E-mail</Text>
-          </Icon>
-        </RectButton>
-      </View>
-    </SafeAreaView>
-  );
+        <View style={styles.footer}>
+          <RectButton style={styles.button} onPress={handleWhatsApp}>
+            <FontAwesome name="whatsapp" size={20} color="#FFFFFF">
+              <Text style={styles.buttonText}> WhatsApp</Text>
+            </FontAwesome>
+          </RectButton>
+          <RectButton style={styles.button} onPress={handleComposeMail}>
+            <Icon name="mail" size={20} color="#FFFFFF">
+              <Text style={styles.buttonText}> E-mail</Text>
+            </Icon>
+          </RectButton>
+        </View>
+      </SafeAreaView>
+    );
 };
 
 const styles = StyleSheet.create({

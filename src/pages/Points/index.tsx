@@ -105,14 +105,16 @@ const Points: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <TouchableOpacity onPress={handleNavigateBack}>
-        <Icon name="log-out" size={20} color="#34cb79" />
-      </TouchableOpacity>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={handleNavigateBack}>
+          <Icon name="log-out" size={20} color="#34cb79" />
+        </TouchableOpacity>
 
-      <Text style={styles.title}>Bem vindo.</Text>
-      <Text style={styles.description}>
-        Encontre no mapa um ponto de coleta.
-      </Text>
+        <Text style={styles.title}>Bem vindo.</Text>
+        <Text style={styles.description}>
+          Encontre no mapa um ponto de coleta.
+        </Text>
+      </View>
 
       <View style={styles.mapContainer}>
         {initialPosition[0] !== 0 && (
@@ -180,6 +182,9 @@ const Points: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
+  header: {
+    paddingHorizontal: 32,
+  },
   container: {
     flex: 1,
     paddingTop: 20 + Constants.statusBarHeight,
