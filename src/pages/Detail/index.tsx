@@ -30,85 +30,6 @@ interface Point {
   }[];
 }
 
-const Detail: React.FC = () => {
-  const [point, setPoint] = useState<Point>({} as Point);
-
-  const navigate = useNavigation();
-  const route = useRoute();
-
-  const routeParams = route.params as Params;
-
-  useEffect(() => {
-    api.get(`points/${routeParams.point_id}`).then((response) => {
-      setPoint(response.data);
-    });
-  }, []);
-
-  const handleNavigateBack = useCallback(() => {
-    navigate.goBack();
-  }, []);
-
-  const handleComposeMail = useCallback(() => {
-    MailComposer.composeAsync({
-      subject: 'Interesse na coleta de resíduos',
-      recipients: [point.email],
-    });
-  }, []);
-
-  const handleWhatsApp = useCallback(() => {
-    Linking.openURL(
-      `whatsapp://send?phone=${point.whatsapp}&text=Tenho interesse sobre coleta de resíduos`
-    );
-  }, []);
-
-  if (!point.name) {
-    return (
-      <View style={{ padding: 32, paddingTop: 20 + Constants.statusBarHeight }}>
-        <Text>Carregando!</Text>
-      </View>
-    );
-  } else
-    return (
-      <SafeAreaView style={{ flex: 1 }}>
-        <View style={styles.container}>
-          <TouchableOpacity onPress={handleNavigateBack}>
-            <Icon name="arrow-left" size={20} color="#34cb79" />
-          </TouchableOpacity>
-
-          <Image
-            style={styles.pointImage}
-            source={{
-              uri: point.image,
-            }}
-          />
-          <Text style={styles.pointName}>{point.name}</Text>
-          <Text style={styles.pointItems}>
-            {point.items.map((item) => item.title).join(', ')}
-          </Text>
-
-          <View style={styles.address}>
-            <Text style={styles.addressTitle}>Endereço</Text>
-            <Text
-              style={styles.addressContent}
-            >{`${point.city} - ${point.uf}`}</Text>
-          </View>
-        </View>
-        <View style={styles.footer}>
-          <RectButton style={styles.button} onPress={handleWhatsApp}>
-            <FontAwesome name="whatsapp" size={20} color="#FFFFFF">
-              <Text style={styles.buttonText}> WhatsApp</Text>
-            </FontAwesome>
-          </RectButton>
-          <RectButton style={styles.button} onPress={handleComposeMail}>
-            <Icon name="mail" size={20} color="#FFFFFF">
-              <Text style={styles.buttonText}> E-mail</Text>
-            </Icon>
-          </RectButton>
-        </View>
-      </SafeAreaView>
-    );
-};
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -182,5 +103,84 @@ const styles = StyleSheet.create({
     fontFamily: 'Roboto_500Medium',
   },
 });
+
+const Detail: React.FC = () => {
+  const [point, setPoint] = useState<Point>({} as Point);
+
+  const navigate = useNavigation();
+  const route = useRoute();
+
+  const routeParams = route.params as Params;
+
+  useEffect(() => {
+    api.get(`points/${routeParams.point_id}`).then(response => {
+      setPoint(response.data);
+    });
+  }, [routeParams.point_id]);
+
+  const handleNavigateBack = useCallback(() => {
+    navigate.goBack();
+  }, [navigate]);
+
+  const handleComposeMail = useCallback(() => {
+    MailComposer.composeAsync({
+      subject: 'Interesse na coleta de resíduos',
+      recipients: [point.email],
+    });
+  }, [point.email]);
+
+  const handleWhatsApp = useCallback(() => {
+    Linking.openURL(
+      `whatsapp://send?phone=${point.whatsapp}&text=Tenho interesse sobre coleta de resíduos`,
+    );
+  }, [point.whatsapp]);
+
+  if (!point.name) {
+    return (
+      <View style={{ padding: 32, paddingTop: 20 + Constants.statusBarHeight }}>
+        <Text>Carregando!</Text>
+      </View>
+    );
+  }
+  return (
+    <SafeAreaView style={{ flex: 1 }}>
+      <View style={styles.container}>
+        <TouchableOpacity onPress={handleNavigateBack}>
+          <Icon name="arrow-left" size={20} color="#34cb79" />
+        </TouchableOpacity>
+
+        <Image
+          style={styles.pointImage}
+          source={{
+            uri: point.image,
+          }}
+        />
+        <Text style={styles.pointName}>{point.name}</Text>
+        <Text style={styles.pointItems}>
+          {point.items.map(item => item.title).join(', ')}
+        </Text>
+
+        <View style={styles.address}>
+          <Text style={styles.addressTitle}>Endereço</Text>
+          <Text style={styles.addressContent}>
+            {`${point.city} - ${point.uf}`}
+          </Text>
+        </View>
+      </View>
+      <View style={styles.footer}>
+        <RectButton style={styles.button} onPress={handleWhatsApp}>
+          <FontAwesome name="whatsapp" size={20} color="#FFFFFF">
+            <Text style={styles.buttonText}> WhatsApp</Text>
+          </FontAwesome>
+        </RectButton>
+        <RectButton style={styles.button} onPress={handleComposeMail}>
+          <Icon name="mail" size={20} color="#FFFFFF">
+            <Text style={styles.buttonText}> E-mail</Text>
+          </Icon>
+        </RectButton>
+      </View>
+    </SafeAreaView>
+  );
+};
 
 export default Detail;

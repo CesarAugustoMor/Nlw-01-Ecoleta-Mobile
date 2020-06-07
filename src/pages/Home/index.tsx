@@ -1,38 +1,29 @@
 import { Feather as Icon } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import React, { useCallback } from 'react';
-import { Image, ImageBackground, StyleSheet, Text, View } from 'react-native';
+import Axios from 'axios';
+import React, { useCallback, useEffect, useState } from 'react';
+import {
+  Image,
+  ImageBackground,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { RectButton } from 'react-native-gesture-handler';
+import RNPikerSelect from 'react-native-picker-select';
 
-const Home: React.FC = () => {
-  const navigation = useNavigation();
+interface Uf {
+  id: number;
+  sigla: string;
+  nome: string;
+}
 
-  const handleNavigationToPoints = useCallback(() => {
-    navigation.navigate('Points');
-  }, []);
-  return (
-    <ImageBackground
-      source={require('../../assets/home-background.png')}
-      style={styles.container}
-      imageStyle={{ width: 274, height: 368 }}
-    >
-      <View style={styles.main}>
-        <Image source={require('../../assets/logo.png')} />
-        <Text style={styles.title}>Seu marketplace de coleta de resíduos</Text>
-        <Text style={styles.description}>
-          Ajudamos pessoas a encontrar pontos de coleta de forma eficiente.
-        </Text>
-      </View>
-      <View style={styles.footer}></View>
-      <RectButton style={styles.button} onPress={handleNavigationToPoints}>
-        <View style={styles.buttonIcon}>
-          <Icon name="arrow-right" color="#FFF" size={24} />
-        </View>
-        <Text style={styles.buttonText}>Entrar</Text>
-      </RectButton>
-    </ImageBackground>
-  );
-};
+interface City {
+  id: number;
+  nome: string;
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -72,7 +63,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginBottom: 8,
     paddingHorizontal: 24,
-    fontSize: 16,
   },
 
   button: {
@@ -102,5 +92,106 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
+
+const Home: React.FC = () => {
+  const [ufs, setUfs] = useState<Uf[]>([]);
+  const [selectedUf, setSelectedUf] = useState('0');
+  const [selectedCity, setSelectedCity] = useState('0');
+  const [cities, setCities] = useState<City[]>([]);
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    Axios.get(
+      'https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome',
+    ).then(response => {
+      setUfs(response.data);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (selectedUf === '0') {
+      setCities([]);
+      return;
+    }
+    Axios.get(
+      `https://servicodados.ibge.gov.br/api/v1/localidades/estados/${selectedUf}/municipios`,
+    ).then(response => {
+      setCities(response.data);
+    });
+  }, [selectedUf]);
+
+  const handleNavigationToPoints = useCallback(() => {
+    navigation.navigate('Points', { uf: selectedUf, city: selectedCity });
+  }, [navigation, selectedCity, selectedUf]);
+
+  const handleLoadUfs = useCallback(() => {
+    return ufs.map(uf => ({
+      label: `${uf.sigla} - ${uf.nome}`,
+      value: uf.sigla,
+    }));
+  }, [ufs]);
+
+  const handleLoadCities = useCallback(() => {
+    return cities.map(city => ({
+      label: city.nome,
+      value: city.nome,
+    }));
+  }, [cities]);
+
+  const handleSelectUf = useCallback(value => {
+    setSelectedUf(value);
+    setSelectedCity('0');
+  }, []);
+
+  const handleSelectCity = useCallback((value: string) => {
+    setSelectedCity(value);
+  }, []);
+
+  return (
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ImageBackground
+        source={require('../../assets/home-background.png')}
+        style={styles.container}
+        imageStyle={{ width: 274, height: 368 }}
+      >
+        <View style={styles.main}>
+          <Image source={require('../../assets/logo.png')} />
+          <Text style={styles.title}>
+            Seu marketplace de coleta de resíduos
+          </Text>
+          <Text style={styles.description}>
+            Ajudamos pessoas a encontrar pontos de coleta de forma eficiente.
+          </Text>
+        </View>
+        <View style={styles.footer}>
+          <RNPikerSelect
+            placeholder={{ label: 'Selecione um Estado' }}
+            value={selectedUf}
+            style={{ viewContainer: styles.input }}
+            onValueChange={handleSelectUf}
+            items={handleLoadUfs()}
+          />
+          <RNPikerSelect
+            placeholder={{ label: 'Selecione uma Cidade' }}
+            value={selectedCity}
+            style={{ viewContainer: styles.input }}
+            onValueChange={handleSelectCity}
+            items={handleLoadCities()}
+          />
+
+          <RectButton style={styles.button} onPress={handleNavigationToPoints}>
+            <View style={styles.buttonIcon}>
+              <Icon name="arrow-right" color="#FFF" size={24} />
+            </View>
+            <Text style={styles.buttonText}>Entrar</Text>
+          </RectButton>
+        </View>
+      </ImageBackground>
+    </KeyboardAvoidingView>
+  );
+};
 
 export default Home;
